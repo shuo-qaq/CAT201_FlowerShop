@@ -54,7 +54,7 @@
 
         <div id="sidebarContent" class="flex-grow-1 overflow-auto">
             <div class="text-center py-5">
-                <p class="text-muted">Click the cart icon to view your current session items.</p>
+                <p class="text-muted">Loading your items...</p>
             </div>
         </div>
 
@@ -68,8 +68,20 @@
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top shadow">
     <div class="container">
         <a class="navbar-brand fw-bold" href="showFlowers">FLOWER<span class="text-success">SHOP</span></a>
+
         <div class="ms-auto d-flex align-items-center">
             <a class="nav-link text-white me-3" href="index.jsp">Home</a>
+
+            <% if (session.getAttribute("user") != null) { %>
+                <span class="text-white me-2 small">Welcome, <strong><%= session.getAttribute("user") %></strong></span>
+                <% if ("admin".equals(session.getAttribute("role"))) { %>
+                    <a href="showFlowers?target=management" class="btn btn-sm btn-warning me-2">Admin Panel</a>
+                <% } %>
+                <a href="manageFlower?action=logout" class="btn btn-sm btn-link text-danger text-decoration-none me-3">Logout</a>
+            <% } else { %>
+                <a href="user_login.jsp" class="btn btn-sm btn-outline-light me-3">Login</a>
+            <% } %>
+
             <a href="javascript:void(0)" onclick="toggleCart()" class="btn btn-outline-success position-relative p-1 px-2">
                 <i class="fas fa-shopping-cart text-white"></i>
                 <span id="cartBadge" class="badge bg-danger cart-count">
@@ -114,11 +126,11 @@
         %>
             <div class="col-lg-3 col-md-4 col-sm-6 product-item" data-category="<%= f.getCategory() %>" data-name="<%= f.getName().toLowerCase() %>">
                 <div class="card h-100 flower-card position-relative shadow-sm">
-                    <span class="category-badge"><%= f.getCategory() %></span>
+                    <span class="category-badge text-uppercase"><%= f.getCategory() %></span>
                     <img src="img/<%= f.getImageUrl() %>" class="card-img-top" alt="<%= f.getName() %>">
                     <div class="card-body text-center p-3">
                         <h6 class="fw-bold text-uppercase"><%= f.getName() %></h6>
-                        <p class="text-success fw-bold mb-3">$<%= f.getPrice() %></p>
+                        <p class="text-success fw-bold mb-3">$<%= String.format("%.2f", f.getPrice()) %></p>
                         <a href="productDetails?id=<%= f.getId() %>" class="btn btn-success btn-sm w-100 fw-bold mb-2">DETAILS</a>
                         <button onclick="addToCart(<%= f.getId() %>, '<%= f.getName() %>')" class="btn btn-outline-dark btn-sm w-100 fw-bold">
                             ADD TO CART
@@ -131,7 +143,6 @@
 </main>
 
 <script>
-    // Logic for the sliding sidebar
     function toggleCart() {
         const sidebar = document.getElementById('cartSidebar');
         const overlay = document.getElementById('cartOverlay');
@@ -143,7 +154,6 @@
         }
     }
 
-    // Displays basic session info in sidebar when manually opened
     function updateSidebarInfo() {
         const count = document.getElementById('cartBadge').innerText;
         document.getElementById('sidebarContent').innerHTML = `
@@ -151,24 +161,30 @@
                 <p class="text-muted mb-1">Current Session Items:</p>
                 <h3 class="fw-bold text-success">\${count}</h3>
                 <hr>
-                <p class="small text-muted">Proceed to the checkout page for itemized prices and names.</p>
+                <p class="small text-muted">Please go to the full cart page to view details and proceed to checkout.</p>
             </div>
         `;
     }
 
-    // AJAX call to add item without redirecting or automatically opening the sidebar
     function addToCart(id, name) {
+        // Retrieve session status from server variable
+        const currentUser = "<%= (session.getAttribute("user") != null) ? session.getAttribute("user") : "" %>";
+
+        if (currentUser === "") {
+            alert("Authentication Required: Please login to your customer account to shop.");
+            window.location.href = "user_login.jsp";
+            return;
+        }
+
         fetch('cart?action=add&id=' + id)
             .then(res => res.text())
             .then(newCount => {
-                // Update navigation badge only
                 document.getElementById('cartBadge').innerText = newCount;
-                // Log for developer console (optional)
                 console.log("Added to cart: " + name);
-            });
+            })
+            .catch(err => console.error("Error adding to cart:", err));
     }
 
-    // Filtering Logic
     let currentCat = 'all';
     function setCategory(cat, btn) {
         currentCat = cat;

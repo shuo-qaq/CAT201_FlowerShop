@@ -1,3 +1,4 @@
+com\flowershop\LogoutServlet.class
 com\flowershop\CartServlet.class
 com\flowershop\ProductDetailServlet.class
 com\flowershop\AdminServlet.class
