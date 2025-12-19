@@ -1,4 +1,17 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%
+    // Fix for the infinite loop:
+    // If the user is already logged in, skip the welcome page.
+    String role = (String) session.getAttribute("role");
+
+    if ("admin".equals(role)) {
+        response.sendRedirect("showFlowers?target=management");
+        return;
+    } else if ("customer".equals(role)) {
+        response.sendRedirect("showFlowers");
+        return;
+    }
+%>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -11,7 +24,6 @@
         :root { --primary-color: #198754; --admin-color: #212529; }
         body, html { height: 100%; margin: 0; font-family: 'Segoe UI', Tahoma, sans-serif; }
 
-        /* Split Screen Hero */
         .hero-section { display: flex; height: 100vh; overflow: hidden; }
 
         .hero-panel {
@@ -26,7 +38,6 @@
             position: relative;
         }
 
-        /* Customer Side */
         .customer-panel {
             background: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), url('https://images.unsplash.com/photo-1526047932273-341f2a7631f9?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80');
             background-size: cover;
@@ -34,7 +45,6 @@
             color: white;
         }
 
-        /* Admin Side */
         .admin-panel {
             background-color: #f8f9fa;
             color: var(--admin-color);
@@ -56,18 +66,6 @@
             font-size: 3rem;
             margin-bottom: 20px;
         }
-
-        .badge-new {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            background: #ffc107;
-            color: #000;
-            padding: 5px 15px;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: bold;
-        }
     </style>
 </head>
 <body>
@@ -85,7 +83,6 @@
     </div>
 
     <div class="hero-panel admin-panel">
-        <span class="badge-new">Staff Only</span>
         <div class="icon-box text-muted"><i class="fas fa-user-shield"></i></div>
         <h2 class="fw-bold">Management</h2>
         <p class="text-muted">Access inventory and order management systems.</p>

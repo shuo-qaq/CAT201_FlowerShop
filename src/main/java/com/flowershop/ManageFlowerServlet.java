@@ -8,7 +8,7 @@ import java.sql.*;
 
 /**
  * ManageFlowerServlet handles multi-role authentication and administrative
- * flower management (CRUD) operations.
+ * flower management (CRUD) operations including detailed descriptions.
  */
 @WebServlet("/manageFlower")
 public class ManageFlowerServlet extends HttpServlet {
@@ -21,14 +21,14 @@ public class ManageFlowerServlet extends HttpServlet {
         String action = request.getParameter("action");
         HttpSession session = request.getSession();
 
-        // 1. Process Logout
+        // 1. Process Logout: Clear session and return to shop
         if ("logout".equals(action)) {
             session.invalidate();
             response.sendRedirect("showFlowers");
             return;
         }
 
-        // 2. Admin Role Security Check for Deletion
+        // 2. Admin Role Security Check: Protect administrative operations
         String role = (String) session.getAttribute("role");
         if (!"admin".equals(role)) {
             response.sendRedirect("admin_login.jsp");
@@ -57,25 +57,23 @@ public class ManageFlowerServlet extends HttpServlet {
         String action = request.getParameter("action");
         HttpSession session = request.getSession();
 
-        // 1. Unified Login Logic with Role Separation
+        // 1. Authentication Logic: Supports both Customer and Admin
         if ("login".equals(action)) {
             String userParam = request.getParameter("username");
             String passParam = request.getParameter("password");
             String loginType = request.getParameter("loginType"); // "admin" or "customer"
 
             if ("admin".equals(loginType)) {
-                // ADMIN LOGIN: Strict database verification
+                // ADMIN LOGIN: Verified against database 'users' table
                 handleAdminLogin(userParam, passParam, session, response);
             } else {
-                // USER LOGIN: Dummy flow - allows any credentials for demonstration
-                session.setAttribute("user", userParam);
-                session.setAttribute("role", "customer");
-                response.sendRedirect("showFlowers");
+                // CUSTOMER LOGIN: Bypass database check as requested
+                handleCustomerLogin(userParam, passParam, session, response);
             }
             return;
         }
 
-        // 2. Admin Security Check for Modification Actions (Add/Update)
+        // 2. Security Barrier: Ensure only admins can modify flower data
         String role = (String) session.getAttribute("role");
         if (!"admin".equals(role)) {
             response.sendRedirect("admin_login.jsp");
@@ -89,11 +87,12 @@ public class ManageFlowerServlet extends HttpServlet {
     }
 
     /**
-     * Private helper to handle strict Admin database authentication.
+     * Private helper to handle Admin database authentication.
      */
     private void handleAdminLogin(String user, String pass, HttpSession session, HttpServletResponse response) throws IOException {
         try (Connection conn = DBUtil.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement("SELECT role FROM users WHERE username = ? AND password = ? AND role = 'admin'")) {
+             PreparedStatement pstmt = conn.prepareStatement(
+                     "SELECT role FROM users WHERE username = ? AND password = ? AND role = 'admin'")) {
 
             pstmt.setString(1, user);
             pstmt.setString(2, pass);
@@ -109,17 +108,29 @@ public class ManageFlowerServlet extends HttpServlet {
             }
         } catch (Exception e) {
             e.printStackTrace();
-            response.sendRedirect("admin_login.jsp?status=failed");
+            response.sendRedirect("admin_login.jsp?status=error");
         }
     }
 
     /**
-     * Private helper to extract parameters and execute Add or Update SQL.
+     * Private helper to handle Customer login.
+     * Modified to allow any credentials to succeed.
+     */
+    private void handleCustomerLogin(String user, String pass, HttpSession session, HttpServletResponse response) throws IOException {
+        // Database check removed to allow instant login success
+        session.setAttribute("user", user);
+        session.setAttribute("role", "customer");
+        response.sendRedirect("showFlowers");
+    }
+
+    /**
+     * Private helper to handle Add or Update SQL, including 'description'.
      */
     private void processFlowerManagement(HttpServletRequest request, String action) {
         String name = request.getParameter("name");
         String category = request.getParameter("category");
         String imageUrl = request.getParameter("imageUrl");
+        String description = request.getParameter("description");
 
         double price = 0.0;
         try {
@@ -130,13 +141,13 @@ public class ManageFlowerServlet extends HttpServlet {
         }
 
         if ("add".equals(action)) {
-            executeSql("INSERT INTO flowers (name, price, category, image_url) VALUES (?, ?, ?, ?)",
-                    name, price, category, imageUrl);
+            executeSql("INSERT INTO flowers (name, price, category, image_url, description) VALUES (?, ?, ?, ?, ?)",
+                    name, price, category, imageUrl, description);
         } else if ("update".equals(action)) {
             try {
                 int id = Integer.parseInt(request.getParameter("id"));
-                executeSql("UPDATE flowers SET name = ?, price = ?, category = ?, image_url = ? WHERE id = ?",
-                        name, price, category, imageUrl, id);
+                executeSql("UPDATE flowers SET name = ?, price = ?, category = ?, image_url = ?, description = ? WHERE id = ?",
+                        name, price, category, imageUrl, description, id);
             } catch (NumberFormatException e) {
                 e.printStackTrace();
             }
@@ -144,7 +155,7 @@ public class ManageFlowerServlet extends HttpServlet {
     }
 
     /**
-     * Utility method to execute SQL updates securely.
+     * Utility method to execute SQL updates securely using DBUtil.
      */
     private void executeSql(String sql, Object... params) {
         try (Connection conn = DBUtil.getConnection();
@@ -153,8 +164,6 @@ public class ManageFlowerServlet extends HttpServlet {
                 pstmt.setObject(i + 1, params[i]);
             }
             pstmt.executeUpdate();
-        } catch (SQLException e) {
-            e.printStackTrace();
         } catch (Exception e) {
             e.printStackTrace();
         }

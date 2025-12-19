@@ -39,6 +39,8 @@
             background: rgba(0,0,0,0.5);
             display: none; z-index: 1999;
         }
+        /* Quantity Buttons Styling */
+        .qty-btn { width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; border-radius: 50%; padding: 0; }
     </style>
 </head>
 <body>
@@ -48,19 +50,51 @@
 <div id="cartSidebar">
     <div class="p-4 d-flex flex-column h-100">
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h4 class="fw-bold m-0 text-success"><i class="fas fa-shopping-basket me-2"></i>Cart Summary</h4>
+            <h4 class="fw-bold m-0 text-success"><i class="fas fa-shopping-basket me-2"></i>My Cart</h4>
             <button onclick="toggleCart()" class="btn-close"></button>
         </div>
 
         <div id="sidebarContent" class="flex-grow-1 overflow-auto">
-            <div class="text-center py-5">
-                <p class="text-muted">Loading your items...</p>
-            </div>
+            <%
+                Map<Integer, Integer> cart = (Map<Integer, Integer>) session.getAttribute("cart");
+                if (cart != null && !cart.isEmpty()) {
+                    for (Map.Entry<Integer, Integer> entry : cart.entrySet()) {
+            %>
+                <div class="card mb-3 border-0 shadow-sm p-3 text-dark">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <span class="fw-bold d-block">Product ID: #<%= entry.getKey() %></span>
+                        </div>
+                        <div class="d-flex align-items-center gap-2">
+                            <a href="cart?action=decrease&id=<%= entry.getKey() %>" class="btn btn-outline-danger qty-btn">
+                                <i class="fas fa-minus small"></i>
+                            </a>
+                            <span class="fw-bold px-1"><%= entry.getValue() %></span>
+                            <a href="cart?action=add&id=<%= entry.getKey() %>" class="btn btn-outline-success qty-btn">
+                                <i class="fas fa-plus small"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            <%
+                    }
+                } else {
+            %>
+                <div class="text-center py-5">
+                    <i class="fas fa-shopping-cart fa-3x text-muted mb-3"></i>
+                    <p class="text-muted">Your cart is empty.</p>
+                </div>
+            <% } %>
         </div>
 
         <div class="mt-auto border-top pt-3">
-            <a href="cart.jsp" class="btn btn-success w-100 fw-bold mb-2 py-2">CHECKOUT NOW</a>
-            <button onclick="toggleCart()" class="btn btn-outline-secondary w-100 btn-sm">CONTINUE SHOPPING</button>
+            <% if (cart != null && !cart.isEmpty()) { %>
+                <a href="cart?action=clear" class="btn btn-outline-danger w-100 mb-2 btn-sm" onclick="return confirm('Empty cart?')">
+                    <i class="fas fa-trash-alt me-1"></i> CLEAR ALL
+                </a>
+            <% } %>
+            <a href="cart.jsp" class="btn btn-success w-100 fw-bold py-2 shadow-sm">CHECKOUT NOW</a>
+            <button onclick="toggleCart()" class="btn btn-outline-secondary w-100 btn-sm mt-2">CONTINUE SHOPPING</button>
         </div>
     </div>
 </div>
@@ -87,9 +121,8 @@
                 <span id="cartBadge" class="badge bg-danger cart-count">
                     <%
                         int totalItems = 0;
-                        Map<Integer, Integer> cartMap = (Map<Integer, Integer>) session.getAttribute("cart");
-                        if (cartMap != null) {
-                            for (Integer qty : cartMap.values()) {
+                        if (cart != null) {
+                            for (Integer qty : cart.values()) {
                                 totalItems += qty;
                             }
                         }
@@ -125,7 +158,7 @@
                 for (Flower f : flowerList) {
         %>
             <div class="col-lg-3 col-md-4 col-sm-6 product-item" data-category="<%= f.getCategory() %>" data-name="<%= f.getName().toLowerCase() %>">
-                <div class="card h-100 flower-card position-relative shadow-sm">
+                <div class="card h-100 flower-card position-relative shadow-sm text-dark">
                     <span class="category-badge text-uppercase"><%= f.getCategory() %></span>
                     <img src="img/<%= f.getImageUrl() %>" class="card-img-top" alt="<%= f.getName() %>">
                     <div class="card-body text-center p-3">
@@ -143,46 +176,31 @@
 </main>
 
 <script>
+    // Keep sidebar open if redirected back from Cart action
+    window.onload = function() {
+        const urlParams = new URLSearchParams(window.location.search);
+        // If there's an action in URL or session-based need, you could auto-open here
+        // For this version, user manually opens it or it re-renders based on clicks
+    }
+
     function toggleCart() {
         const sidebar = document.getElementById('cartSidebar');
         const overlay = document.getElementById('cartOverlay');
         sidebar.classList.toggle('active');
         overlay.style.display = sidebar.classList.contains('active') ? 'block' : 'none';
-
-        if(sidebar.classList.contains('active')) {
-            updateSidebarInfo();
-        }
-    }
-
-    function updateSidebarInfo() {
-        const count = document.getElementById('cartBadge').innerText;
-        document.getElementById('sidebarContent').innerHTML = `
-            <div class="card border-0 bg-light p-3">
-                <p class="text-muted mb-1">Current Session Items:</p>
-                <h3 class="fw-bold text-success">\${count}</h3>
-                <hr>
-                <p class="small text-muted">Please go to the full cart page to view details and proceed to checkout.</p>
-            </div>
-        `;
     }
 
     function addToCart(id, name) {
-        // Retrieve session status from server variable
         const currentUser = "<%= (session.getAttribute("user") != null) ? session.getAttribute("user") : "" %>";
 
         if (currentUser === "") {
-            alert("Authentication Required: Please login to your customer account to shop.");
+            alert("Authentication Required: Please login to shop.");
             window.location.href = "user_login.jsp";
             return;
         }
 
-        fetch('cart?action=add&id=' + id)
-            .then(res => res.text())
-            .then(newCount => {
-                document.getElementById('cartBadge').innerText = newCount;
-                console.log("Added to cart: " + name);
-            })
-            .catch(err => console.error("Error adding to cart:", err));
+        // Navigate to servlet - Referer logic in CartServlet will bring user back
+        window.location.href = 'cart?action=add&id=' + id;
     }
 
     let currentCat = 'all';

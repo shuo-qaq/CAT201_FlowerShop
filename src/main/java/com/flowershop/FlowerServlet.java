@@ -23,7 +23,8 @@ public class FlowerServlet extends HttpServlet {
         String target = request.getParameter("target");
 
         // 2. Construct dynamic SQL query
-        StringBuilder sql = new StringBuilder("SELECT id, name, price, category, image_url FROM flowers");
+        // IMPORTANT: Added 'description' to the SELECT statement
+        StringBuilder sql = new StringBuilder("SELECT id, name, price, category, image_url, description FROM flowers");
         boolean isFiltering = (filterCategory != null && !filterCategory.isEmpty() && !filterCategory.equalsIgnoreCase("all"));
 
         if (isFiltering) {
@@ -40,17 +41,20 @@ public class FlowerServlet extends HttpServlet {
 
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
+                    // IMPORTANT: Pass 6 arguments to the constructor to match the updated Flower class
                     flowerList.add(new Flower(
                             rs.getInt("id"),
                             rs.getString("name"),
                             rs.getDouble("price"),
                             rs.getString("category"),
-                            rs.getString("image_url")
+                            rs.getString("image_url"),
+                            rs.getString("description") // This line fixes the red error
                     ));
                 }
             }
         } catch (SQLException e) {
             // Error logging
+            System.err.println("SQL Error in FlowerServlet: " + e.getMessage());
             e.printStackTrace();
         } catch (Exception e) {
             e.printStackTrace();
@@ -60,7 +64,6 @@ public class FlowerServlet extends HttpServlet {
         request.setAttribute("allFlowers", flowerList);
 
         // 5. Routing logic based on target parameter
-        // If target is 'management', go to management page; otherwise, go to shop page.
         String destination = "/shop.jsp";
         if ("management".equalsIgnoreCase(target)) {
             destination = "/management.jsp";

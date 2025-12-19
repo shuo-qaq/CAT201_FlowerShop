@@ -14,41 +14,40 @@ public class ProductDetailServlet extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
-        // 1. Get the product ID from the request parameter
         String idStr = request.getParameter("id");
         Flower flower = null;
 
         if (idStr != null && !idStr.isEmpty()) {
-            try {
-                // 2. Database connection and query
-                Connection conn = DBUtil.getConnection();
-                String sql = "SELECT id, name, price, category, image_url FROM flowers WHERE id = ?";
-                PreparedStatement pstmt = conn.prepareStatement(sql);
+            // Ensure 'description' is included in the SELECT statement
+            String sql = "SELECT id, name, price, category, image_url, description FROM flowers WHERE id = ?";
+
+            try (Connection conn = DBUtil.getConnection();
+                 PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
                 pstmt.setInt(1, Integer.parseInt(idStr));
 
-                ResultSet rs = pstmt.executeQuery();
-                if (rs.next()) {
-                    flower = new Flower(
-                            rs.getInt("id"),
-                            rs.getString("name"),
-                            rs.getDouble("price"),
-                            rs.getString("category"),
-                            rs.getString("image_url")
-                    );
+                try (ResultSet rs = pstmt.executeQuery()) {
+                    if (rs.next()) {
+                        // Crucial: The order of arguments must match the Constructor
+                        flower = new Flower(
+                                rs.getInt("id"),
+                                rs.getString("name"),
+                                rs.getDouble("price"),
+                                rs.getString("category"),
+                                rs.getString("image_url"),
+                                rs.getString("description")
+                        );
+                    }
                 }
-
-                // Close resources
-                rs.close();
-                pstmt.close();
-                conn.close();
-
+            } catch (SQLException e) {
+                e.printStackTrace();
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }
 
-        // 3. Forward the flower object to details.jsp
         request.setAttribute("flower", flower);
+        // Forward to your JSP (ensure the filename matches your webapp folder)
         request.getRequestDispatcher("/details.jsp").forward(request, response);
     }
 }
