@@ -1,3 +1,4 @@
-com\flowershop\Flower.class
 com\flowershop\FlowerServlet.class
+com\flowershop\Flower.class
+com\flowershop\AdminServlet.class
 com\flowershop\DBUtil.class
