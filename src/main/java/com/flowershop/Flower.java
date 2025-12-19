@@ -10,7 +10,7 @@ public class Flower {
     // Default Constructor
     public Flower() {}
 
-    // Full Constructor (Matching the new DB structure)
+    // Full Constructor for database mapping
     public Flower(int id, String name, double price, String category, String imageUrl) {
         this.id = id;
         this.name = name;
@@ -19,7 +19,7 @@ public class Flower {
         this.imageUrl = imageUrl;
     }
 
-    // Getters
+    // Getters used by JSP and Servlets
     public int getId() { return id; }
     public String getName() { return name; }
     public double getPrice() { return price; }

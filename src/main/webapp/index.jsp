@@ -26,7 +26,7 @@
             margin-bottom: 40px;
         }
 
-        /* 3. Card Refinement for 30 Items */
+        /* 3. Card Refinement */
         .flower-card {
             border: none;
             border-radius: 15px;
@@ -39,7 +39,7 @@
             box-shadow: 0 15px 30px rgba(0,0,0,0.1) !important;
         }
         .card-img-top {
-            height: 200px; /* Reduced height for 4-column layout */
+            height: 200px;
             object-fit: cover;
             transition: transform 0.5s ease;
         }
@@ -131,18 +131,18 @@
 
                     <img src="img/<%= f.getImageUrl() %>" class="card-img-top" alt="<%= f.getName() %>">
 
-                    <div class="card-body p-3">
+                    <div class="card-body p-3 text-center">
                         <h6 class="card-title fw-bold text-uppercase mb-1"><%= f.getName() %></h6>
                         <p class="text-muted small mb-3">Premium Choice</p>
-                        <div class="d-flex justify-content-between align-items-center">
+                        <div class="d-flex justify-content-center align-items-center">
                             <span class="h5 text-success mb-0">$<%= f.getPrice() %></span>
-                            <a href="productDetails?id=<%= f.getId() %>" class="btn btn-sm btn-outline-dark">Details</a>
                         </div>
                     </div>
+
                     <div class="card-footer bg-transparent border-0 p-3 pt-0">
-                        <button class="btn btn-success w-100 py-2 fw-bold btn-sm" onclick="addToCart('<%= f.getName() %>')">
-                            Add to Cart
-                        </button>
+                        <a href="productDetails?id=<%= f.getId() %>" class="btn btn-success w-100 py-2 fw-bold">
+                            BUY NOW
+                        </a>
                     </div>
                 </div>
             </div>
@@ -153,7 +153,7 @@
             <div class="col-12 text-center py-5">
                 <div class="alert shadow-sm border-0 bg-white p-5">
                     <h4 class="text-muted">No products found in database</h4>
-                    <p>Please ensure you have run the SQL script to populate 30 items.</p>
+                    <p>Please ensure you have run the SQL script and accessed via /showFlowers.</p>
                     <a href="showFlowers" class="btn btn-primary">Refresh Inventory</a>
                 </div>
             </div>
@@ -172,14 +172,15 @@
 <script>
     let activeCategory = 'all';
 
+    // Update category filter
     function setCategory(category, btn) {
         activeCategory = category;
-        // Update button UI
         document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         filterItems();
     }
 
+    // Real-time Filtering Logic (Category + Search)
     function filterItems() {
         const searchText = document.getElementById('searchInput').value.toLowerCase();
         const items = document.querySelectorAll('.flower-item');
@@ -188,7 +189,6 @@
             const itemCategory = item.getAttribute('data-category');
             const itemName = item.getAttribute('data-name');
 
-            // Logic: Category must match (or be 'all') AND Name must include search text
             const matchCategory = (activeCategory === 'all' || itemCategory === activeCategory);
             const matchSearch = itemName.includes(searchText);
 
@@ -200,10 +200,7 @@
         });
     }
 
-    function addToCart(name) {
-        alert(name + " has been added to your cart!");
-    }
-
+    // Smooth Scroll
     function scrollToShop() {
         document.getElementById('shop-section').scrollIntoView({ behavior: 'smooth' });
     }
