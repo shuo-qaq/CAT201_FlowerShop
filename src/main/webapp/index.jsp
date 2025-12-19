@@ -31,9 +31,18 @@
         <a class="navbar-brand" href="index.jsp">FlowerShop</a>
         <div class="collapse navbar-collapse">
             <ul class="navbar-nav ms-auto">
-                <li class="nav-item"><a class="nav-link" href="showFlowers">Shop</a></li>
-                <li class="nav-item"><a class="nav-link" href="#">Cart</a></li>
-                <li class="nav-item"><a class="nav-link text-warning" href="#">Admin Login</a></li>
+                <li class="nav-item">
+                    <a class="nav-link" href="showFlowers">Shop</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#">Cart</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link text-warning fw-bold" href="admin.jsp"
+                       onclick="return confirm('You are redirecting to the Management Panel. Continue?')">
+                       Go to Admin Panel
+                    </a>
+                </li>
             </ul>
         </div>
     </div>
