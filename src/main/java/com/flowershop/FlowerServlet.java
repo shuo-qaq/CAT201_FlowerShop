@@ -18,23 +18,28 @@ public class FlowerServlet extends HttpServlet {
 
         List<Flower> flowerList = new ArrayList<>();
 
-        // 1. Database Connection Logic
-        try (Connection conn = DBUtil.getConnection()) {
-            String sql = "SELECT name, price FROM flowers";
-            try (PreparedStatement pstmt = conn.prepareStatement(sql);
-                 ResultSet rs = pstmt.executeQuery()) {
+        // Updated SQL to include ID, Category, and Image_URL
+        String sql = "SELECT id, name, price, category, image_url FROM flowers";
 
-                while (rs.next()) {
-                    String name = rs.getString("name");
-                    double price = rs.getDouble("price");
-                    flowerList.add(new Flower(name, price));
-                }
+        try (Connection conn = DBUtil.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql);
+             ResultSet rs = pstmt.executeQuery()) {
+
+            while (rs.next()) {
+                // Matching the new fields in your database and Flower class
+                int id = rs.getInt("id");
+                String name = rs.getString("name");
+                double price = rs.getDouble("price");
+                String category = rs.getString("category");
+                String imageUrl = rs.getString("image_url");
+
+                // Using the updated constructor
+                flowerList.add(new Flower(id, name, price, category, imageUrl));
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
 
-        // 2. Forward data to JSP
         request.setAttribute("allFlowers", flowerList);
         request.getRequestDispatcher("/index.jsp").forward(request, response);
     }
