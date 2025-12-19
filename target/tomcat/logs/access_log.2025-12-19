@@ -1,2 +1,6 @@
 0:0:0:0:0:0:0:1 - - [19/Dec/2025:02:16:32 +0800] "GET /showFlowers HTTP/1.1" 200 173 http-bio-8080-exec-1 791
 0:0:0:0:0:0:0:1 - - [19/Dec/2025:02:16:32 +0800] "GET /favicon.ico HTTP/1.1" 404 973 http-bio-8080-exec-3 3
+0:0:0:0:0:0:0:1 - - [19/Dec/2025:16:02:51 +0800] "GET / HTTP/1.1" 200 120 http-bio-8082-exec-1 133
+0:0:0:0:0:0:0:1 - - [19/Dec/2025:16:02:51 +0800] "GET /favicon.ico HTTP/1.1" 404 973 http-bio-8082-exec-3 3
+0:0:0:0:0:0:0:1 - - [19/Dec/2025:16:02:55 +0800] "GET /showFlowers HTTP/1.1" 200 162 http-bio-8082-exec-4 300
+0:0:0:0:0:0:0:1 - - [19/Dec/2025:16:03:48 +0800] "GET /showFlowers HTTP/1.1" 200 162 http-bio-8082-exec-5 20

@@ -6,23 +6,36 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
 @WebServlet("/showFlowers")
 public class FlowerServlet extends HttpServlet {
-    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+    @Override
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
 
-        // 模拟从数据库抓取数据
         List<Flower> flowerList = new ArrayList<>();
-        flowerList.add(new Flower("Red Rose", 19.99));
-        flowerList.add(new Flower("Blue Tulip", 12.50));
-        flowerList.add(new Flower("Sun Flower", 8.00));
 
+        // 1. Database Connection Logic
+        try (Connection conn = DBUtil.getConnection()) {
+            String sql = "SELECT name, price FROM flowers";
+            try (PreparedStatement pstmt = conn.prepareStatement(sql);
+                 ResultSet rs = pstmt.executeQuery()) {
 
+                while (rs.next()) {
+                    String name = rs.getString("name");
+                    double price = rs.getDouble("price");
+                    flowerList.add(new Flower(name, price));
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        // 2. Forward data to JSP
         request.setAttribute("allFlowers", flowerList);
-
-
         request.getRequestDispatcher("/index.jsp").forward(request, response);
     }
 }
