@@ -12,25 +12,19 @@
             margin: 0;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
-
-        /* Full screen Hero Section */
         .hero-section {
             background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)),
                         url('https://images.unsplash.com/photo-1519306110291-4a38392b3a9c?auto=format&fit=crop&w=1350&q=80');
             background-size: cover;
             background-position: center;
-            height: 100vh; /* Full Viewport Height */
+            height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
             text-align: center;
         }
-
-        .hero-content {
-            max-width: 800px;
-        }
-
+        .hero-content { max-width: 800px; }
         .btn-start {
             padding: 15px 40px;
             font-size: 1.25rem;
@@ -44,7 +38,13 @@
 
 <nav class="navbar navbar-expand-lg navbar-dark bg-transparent position-absolute w-100" style="z-index: 10;">
     <div class="container">
-        <a class="navbar-brand fw-bold" href="#">FLOWER<span class="text-success">SHOP</span></a>
+        <a class="navbar-brand fw-bold" href="index.jsp">FLOWER<span class="text-success">SHOP</span></a>
+
+        <div class="ms-auto">
+            <a href="login.jsp" class="btn btn-outline-light btn-sm fw-bold px-3" style="border-radius: 20px;">
+                Admin Portal
+            </a>
+        </div>
     </div>
 </nav>
 

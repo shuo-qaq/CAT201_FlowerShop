@@ -1,5 +1,6 @@
 com\flowershop\FlowerServlet.class
 com\flowershop\Flower.class
+com\flowershop\ManageFlowerServlet.class
 com\flowershop\ProductDetailServlet.class
 com\flowershop\AdminServlet.class
 com\flowershop\DBUtil.class

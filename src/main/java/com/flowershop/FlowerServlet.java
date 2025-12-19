@@ -18,20 +18,23 @@ public class FlowerServlet extends HttpServlet {
 
         List<Flower> flowerList = new ArrayList<>();
 
-        // 1. Get optional category filter from request
+        // 1. Get parameters for filtering and navigation
         String filterCategory = request.getParameter("category");
+        String target = request.getParameter("target");
 
-        // 2. Build Dynamic SQL
-        String sql = "SELECT id, name, price, category, image_url FROM flowers";
-        if (filterCategory != null && !filterCategory.isEmpty() && !filterCategory.equalsIgnoreCase("all")) {
-            sql += " WHERE category = ?";
+        // 2. Construct dynamic SQL query
+        StringBuilder sql = new StringBuilder("SELECT id, name, price, category, image_url FROM flowers");
+        boolean isFiltering = (filterCategory != null && !filterCategory.isEmpty() && !filterCategory.equalsIgnoreCase("all"));
+
+        if (isFiltering) {
+            sql.append(" WHERE category = ?");
         }
 
+        // 3. Database operations using try-with-resources
         try (Connection conn = DBUtil.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+             PreparedStatement pstmt = conn.prepareStatement(sql.toString())) {
 
-            // 3. Set parameter if filtering is applied
-            if (filterCategory != null && !filterCategory.isEmpty() && !filterCategory.equalsIgnoreCase("all")) {
+            if (isFiltering) {
                 pstmt.setString(1, filterCategory);
             }
 
@@ -46,14 +49,23 @@ public class FlowerServlet extends HttpServlet {
                     ));
                 }
             }
+        } catch (SQLException e) {
+            // Error logging
+            e.printStackTrace();
         } catch (Exception e) {
             e.printStackTrace();
         }
 
-        // 4. Send data to the dedicated SHOP page (shop.jsp)
+        // 4. Set attribute for JSP rendering
         request.setAttribute("allFlowers", flowerList);
 
-        // CRITICAL CHANGE: Forward to shop.jsp instead of index.jsp
-        request.getRequestDispatcher("/shop.jsp").forward(request, response);
+        // 5. Routing logic based on target parameter
+        // If target is 'management', go to management page; otherwise, go to shop page.
+        String destination = "/shop.jsp";
+        if ("management".equalsIgnoreCase(target)) {
+            destination = "/management.jsp";
+        }
+
+        request.getRequestDispatcher(destination).forward(request, response);
     }
 }
