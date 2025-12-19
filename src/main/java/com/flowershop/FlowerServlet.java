@@ -18,28 +18,40 @@ public class FlowerServlet extends HttpServlet {
 
         List<Flower> flowerList = new ArrayList<>();
 
-        // Updated SQL to include ID, Category, and Image_URL
+        // 1. Get optional category filter from request (e.g., showFlowers?category=Tools)
+        String filterCategory = request.getParameter("category");
+
+        // 2. Build Dynamic SQL based on category filter
         String sql = "SELECT id, name, price, category, image_url FROM flowers";
+        if (filterCategory != null && !filterCategory.isEmpty() && !filterCategory.equals("All")) {
+            sql += " WHERE category = ?";
+        }
 
         try (Connection conn = DBUtil.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql);
-             ResultSet rs = pstmt.executeQuery()) {
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
-            while (rs.next()) {
-                // Matching the new fields in your database and Flower class
-                int id = rs.getInt("id");
-                String name = rs.getString("name");
-                double price = rs.getDouble("price");
-                String category = rs.getString("category");
-                String imageUrl = rs.getString("image_url");
+            // 3. Set parameter if filtering is active
+            if (filterCategory != null && !filterCategory.isEmpty() && !filterCategory.equals("All")) {
+                pstmt.setString(1, filterCategory);
+            }
 
-                // Using the updated constructor
-                flowerList.add(new Flower(id, name, price, category, imageUrl));
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    flowerList.add(new Flower(
+                            rs.getInt("id"),
+                            rs.getString("name"),
+                            rs.getDouble("price"),
+                            rs.getString("category"),
+                            rs.getString("image_url")
+                    ));
+                }
             }
         } catch (Exception e) {
+            // Log the error for debugging
             e.printStackTrace();
         }
 
+        // 4. Send data to JSP
         request.setAttribute("allFlowers", flowerList);
         request.getRequestDispatcher("/index.jsp").forward(request, response);
     }

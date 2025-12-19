@@ -7,6 +7,10 @@ public class Flower {
     private String category;
     private String imageUrl;
 
+    // Default Constructor
+    public Flower() {}
+
+    // Full Constructor (Matching the new DB structure)
     public Flower(int id, String name, double price, String category, String imageUrl) {
         this.id = id;
         this.name = name;
