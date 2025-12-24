@@ -1,4 +1,6 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%-- Accessing the session data saved by CartServlet --%>
+<%@ page import="java.util.*" %>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -36,6 +38,13 @@
             font-family: monospace;
             color: #495057;
         }
+        /* New style for billing info section */
+        .info-box {
+            background-color: #fafafa;
+            border: 1px dashed #dee2e6;
+            border-radius: 12px;
+            padding: 15px;
+        }
     </style>
 </head>
 <body class="d-flex align-items-center justify-content-center vh-100">
@@ -49,11 +58,27 @@
                 </div>
 
                 <h2 class="fw-bold text-dark mt-3">Payment Successful!</h2>
-                <p class="text-muted mb-4">Thank you for your purchase. Your flowers are being prepared for delivery!</p>
+                <p class="text-muted mb-4">Thank you for your purchase, <strong><%= session.getAttribute("user") %></strong>!</p>
 
                 <div class="mb-4">
                     <span class="small text-uppercase text-muted d-block mb-2">Order Tracking Number</span>
                     <span class="order-id fw-bold">#FS-<%=(int)(Math.random()*900000 + 100000)%></span>
+                </div>
+
+                <div class="info-box text-start mb-4">
+                    <h6 class="fw-bold border-bottom pb-2 mb-2"><i class="fas fa-file-invoice-dollar me-2"></i>Order Receipt</h6>
+                    <div class="small mb-1">
+                        <span class="text-muted">Total Paid:</span>
+                        <span class="fw-bold text-success">$<%= String.format("%.2f", session.getAttribute("lastOrderTotal")) %></span>
+                    </div>
+                    <div class="small mb-1">
+                        <span class="text-muted">Contact Phone:</span>
+                        <span class="fw-bold"><%= session.getAttribute("lastOrderPhone") %></span>
+                    </div>
+                    <div class="small">
+                        <span class="text-muted">Shipping Address:</span>
+                        <div class="fw-bold mt-1" style="line-height: 1.2;"><%= session.getAttribute("lastOrderAddress") %></div>
+                    </div>
                 </div>
 
                 <div class="alert alert-success small text-start" role="alert">
@@ -73,7 +98,7 @@
             </div>
 
             <p class="text-center mt-4 text-muted small">
-                A confirmation email has been sent to your registered address.
+                A confirmation has been saved to your account history.
             </p>
         </div>
     </div>

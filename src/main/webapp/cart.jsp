@@ -11,9 +11,9 @@
     <style>
         body { background-color: #f4f7f6; font-family: 'Segoe UI', sans-serif; }
         .cart-header { background: linear-gradient(135deg, #198754 0%, #146c43 100%); color: white; padding: 2rem 0; margin-bottom: 2rem; }
-        .table shadow-sm { background: white; border-radius: 10px; overflow: hidden; }
         .qty-control { display: flex; align-items: center; justify-content: center; gap: 10px; }
         .btn-qty { width: 30px; height: 30px; padding: 0; display: flex; align-items: center; justify-content: center; border-radius: 50%; }
+        .form-label { font-weight: 600; color: #444; }
     </style>
 </head>
 <body>
@@ -41,6 +41,7 @@
                         </thead>
                         <tbody>
                             <%
+                                // English Comments: Retrieve cart from session and initialize totals
                                 Map<Integer, Integer> cart = (Map<Integer, Integer>) session.getAttribute("cart");
                                 double grandTotal = 0;
                                 int totalQty = 0;
@@ -52,7 +53,7 @@
                                 try {
                                     if (cart != null && !cart.isEmpty()) {
                                         conn = DBUtil.getConnection();
-                                        // Update the SQL to just get basic info
+                                        // English Comments: Fetch flower details based on ID stored in cart
                                         String sql = "SELECT name, price FROM flowers WHERE id = ?";
                                         pstmt = conn.prepareStatement(sql);
 
@@ -70,7 +71,7 @@
                             %>
                             <tr>
                                 <td class="ps-4 py-3">
-                                    <span class="fw-bold text-dark"><%= name %></span>
+                                    <span class="fw-bold text-dark text-capitalize"><%= name %></span>
                                 </td>
                                 <td class="text-center text-muted">$<%= String.format("%.2f", price) %></td>
                                 <td class="text-center">
@@ -123,24 +124,41 @@
         <div class="col-lg-4">
             <div class="card shadow-sm border-0 p-2">
                 <div class="card-body p-4">
-                    <h4 class="fw-bold mb-4">Cart Summary</h4>
-                    <div class="d-flex justify-content-between mb-2">
-                        <span class="text-muted">Total Quantity:</span>
-                        <span class="fw-bold text-dark"><%= totalQty %> Items</span>
-                    </div>
-                    <div class="d-flex justify-content-between mb-4">
-                        <span class="text-muted">Shipping:</span>
-                        <span class="text-success fw-bold">Free Shipping</span>
-                    </div>
-                    <hr>
-                    <div class="d-flex justify-content-between mb-4">
-                        <span class="h5 fw-bold">Total Payable:</span>
-                        <span class="h4 fw-bold text-danger">$<%= String.format("%.2f", grandTotal) %></span>
-                    </div>
+                    <h4 class="fw-bold mb-4">Checkout Details</h4>
 
-                    <button class="btn btn-success w-100 fw-bold py-3 mb-3" onclick="processPayment()">
-                        PROCEED TO PAY
-                    </button>
+                    <form id="checkoutForm" action="cart" method="POST">
+                        <input type="hidden" name="action" value="checkout">
+                        <input type="hidden" name="grandTotal" value="<%= grandTotal %>">
+
+                        <div class="mb-3">
+                            <label class="form-label small">Shipping Address</label>
+                            <textarea name="address" class="form-control" rows="2" placeholder="Street, City, Postcode" required></textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label small">Phone Number</label>
+                            <input type="tel" name="phone" class="form-control" placeholder="E.g. +123456789" required>
+                        </div>
+
+                        <div class="d-flex justify-content-between mb-2 mt-4">
+                            <span class="text-muted">Total Quantity:</span>
+                            <span class="fw-bold text-dark"><%= totalQty %> Items</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-muted">Shipping:</span>
+                            <span class="text-success fw-bold">Free</span>
+                        </div>
+                        <hr>
+                        <div class="d-flex justify-content-between mb-4">
+                            <span class="h5 fw-bold">Total Payable:</span>
+                            <span class="h4 fw-bold text-danger">$<%= String.format("%.2f", grandTotal) %></span>
+                        </div>
+
+                        <button type="button" class="btn btn-success w-100 fw-bold py-3 mb-3 shadow-sm" onclick="validateAndSubmit()">
+                            PAY AND PLACE ORDER
+                        </button>
+                    </form>
+
                     <a href="showFlowers" class="btn btn-outline-dark w-100 py-2">
                         <i class="fas fa-arrow-left me-2"></i>CONTINUE SHOPPING
                     </a>
@@ -151,15 +169,23 @@
 </div>
 
 <script>
-    function processPayment() {
+    /* English Comments: Validate inputs and confirm total before submitting the form */
+    function validateAndSubmit() {
         <% if (cart == null || cart.isEmpty()) { %>
             alert("Please add some flowers to your cart before paying!");
             return;
-        <% } else { %>
-            if (confirm("Proceed to checkout with total amount: $<%= String.format("%.2f", grandTotal) %>?")) {
-                window.location.href = "payment_success.jsp";
-            }
         <% } %>
+
+        const form = document.getElementById('checkoutForm');
+        // English Comments: Check if address and phone fields are filled (HTML5 validation)
+        if (!form.checkValidity()) {
+            form.reportValidity();
+            return;
+        }
+
+        if (confirm("Confirm order with total amount: $<%= String.format("%.2f", grandTotal) %>?")) {
+            form.submit();
+        }
     }
 </script>
 
