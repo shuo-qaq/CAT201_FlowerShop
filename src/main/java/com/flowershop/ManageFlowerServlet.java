@@ -4,69 +4,64 @@ import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.*;
 import java.io.IOException;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
 
-/**
- * ManageFlowerServlet handles authentication (via database) and administrative
- * flower management (CRUD) operations.
- */
 @WebServlet("/manageFlower")
 public class ManageFlowerServlet extends HttpServlet {
 
-    // Instance of DBUtil to access database logic
     private DBUtil dbUtil = new DBUtil();
 
     /**
-     * Handles GET requests: LOGOUT and DELETE actions.
+     * Handles GET requests: Logout and Delete operations
      */
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         String action = request.getParameter("action");
         HttpSession session = request.getSession();
 
-        // 1. Process Logout
+        // 1. Process Logout: Invalidate session and redirect to portal index
         if ("logout".equals(action)) {
             session.invalidate();
-            response.sendRedirect("showFlowers");
+            response.sendRedirect("index.jsp");
             return;
         }
 
-        // 2. Admin Security Check for Delete Action
+        // 2. Security Check: Only admins are allowed to perform deletion
         String role = (String) session.getAttribute("role");
         if (!"admin".equals(role)) {
             response.sendRedirect("admin_login.jsp");
             return;
         }
 
+        // 3. Process Flower Deletion by ID
         if ("delete".equals(action)) {
             try {
                 int id = Integer.parseInt(request.getParameter("id"));
-                // You can add a delete method in DBUtil or use direct SQL
                 executeSql("DELETE FROM flowers WHERE id = ?", id);
             } catch (NumberFormatException e) {
                 e.printStackTrace();
             }
         }
+        // Redirect back to management dashboard after deletion
         response.sendRedirect("showFlowers?target=management");
     }
 
     /**
-     * Handles POST requests: LOGIN and REGISTER actions.
+     * Handles POST requests: Login, Register, Add, and Update operations
      */
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        // Set character encoding to support Chinese characters in form inputs
         request.setCharacterEncoding("UTF-8");
         String action = request.getParameter("action");
 
-        // 1. Process Login
         if ("login".equals(action)) {
             handleLogin(request, response);
-        }
-        // 2. Process Registration
-        else if ("register".equals(action)) {
+        } else if ("register".equals(action)) {
             handleRegister(request, response);
-        }
-        // 3. Process Flower Management (Only for logged-in admins)
-        else {
+        } else {
+            // Administrative tasks: Add or Update flowers
             HttpSession session = request.getSession();
             String role = (String) session.getAttribute("role");
             if ("admin".equals(role)) {
@@ -79,50 +74,55 @@ public class ManageFlowerServlet extends HttpServlet {
     }
 
     /**
-     * Authenticates users against the database.
-     * Replaces the previous "any credentials" logic.
+     * Authenticates users and routes back to the specific login page on failure to avoid 404
      */
     private void handleLogin(HttpServletRequest request, HttpServletResponse response) throws IOException {
         String user = request.getParameter("username");
         String pass = request.getParameter("password");
+        // loginType is sent via hidden input to identify the source (Admin vs Customer)
+        String loginType = request.getParameter("loginType");
+
         HttpSession session = request.getSession();
 
-        // Database-driven validation
         if (dbUtil.validateUser(user, pass)) {
             String role = dbUtil.getUserRole(user);
             session.setAttribute("user", user);
             session.setAttribute("role", role);
 
-            // Redirect based on role
+            // Redirect based on user role
             if ("admin".equals(role)) {
                 response.sendRedirect("showFlowers?target=management");
             } else {
                 response.sendRedirect("showFlowers");
             }
         } else {
-            // Redirect back with error message if authentication fails
-            response.sendRedirect("user_login.jsp?error=invalid");
+            // FIX 404: Use loginType to decide which page to return to
+            if ("admin".equals(loginType)) {
+                response.sendRedirect("admin_login.jsp?status=failed");
+            } else {
+                response.sendRedirect("user_login.jsp?status=failed");
+            }
         }
     }
 
     /**
-     * Handles new user account creation.
+     * Handles user registration and redirects to user login page
      */
     private void handleRegister(HttpServletRequest request, HttpServletResponse response) throws IOException {
         String user = request.getParameter("username");
         String pass = request.getParameter("password");
 
         if (dbUtil.registerUser(user, pass)) {
-            // Success: Proceed to login page
+            // Registration success: Redirect to customer login
             response.sendRedirect("user_login.jsp?status=registered");
         } else {
-            // Failure: User might already exist
+            // Registration failure: Redirect back to registration page
             response.sendRedirect("register.jsp?error=exists");
         }
     }
 
     /**
-     * Helper to handle Add or Update flower data.
+     * Common method to handle Add and Update SQL operations
      */
     private void processFlowerManagement(HttpServletRequest request, String action) {
         String name = request.getParameter("name");
@@ -153,11 +153,11 @@ public class ManageFlowerServlet extends HttpServlet {
     }
 
     /**
-     * Utility method to execute SQL updates using DBUtil connection.
+     * General helper to execute SQL Update statements using DBUtil connection
      */
     private void executeSql(String sql, Object... params) {
-        try (java.sql.Connection conn = DBUtil.getConnection();
-             java.sql.PreparedStatement pstmt = conn.prepareStatement(sql)) {
+        try (Connection conn = DBUtil.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
             for (int i = 0; i < params.length; i++) {
                 pstmt.setObject(i + 1, params[i]);
             }

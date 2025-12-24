@@ -3,75 +3,58 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Panel | FlowerShop Management</title>
+    <title>Admin System Access</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        body { background-color: #f8f9fa; }
-        .admin-card { margin-top: 50px; border: none; border-radius: 15px; }
+        /* Professional Dark Theme Styles */
+        body { background: #212529; }
+        .admin-card {
+            border-radius: 15px;
+            border: 2px solid #ffc107; /* Golden border for Admin status */
+            box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+        }
     </style>
 </head>
-<body>
-
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+<body class="d-flex align-items-center vh-100">
     <div class="container">
-        <a class="navbar-brand" href="showFlowers">FlowerShop Admin</a>
-        <div class="collapse navbar-collapse">
-            <ul class="navbar-nav ms-auto">
-                <li class="nav-item">
-                    <a class="nav-link active" href="showFlowers">View Shop</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="#" onclick="alert('Admin Logged Out')">Logout</a>
-                </li>
-            </ul>
-        </div>
-    </div>
-</nav>
+        <div class="row justify-content-center">
+            <div class="col-md-4">
+                <div class="card admin-card bg-dark text-white">
+                    <div class="card-body p-5 text-center">
+                        <h3 class="mb-4 fw-bold">ADMIN LOGIN</h3>
 
-<div class="container">
-    <div class="row justify-content-center">
-        <div class="col-md-6">
-            <div class="card shadow admin-card">
-                <div class="card-header bg-primary text-white text-center py-3">
-                    <h4 class="mb-0">Add New Product to Inventory</h4>
-                </div>
-                <div class="card-body p-4">
-                    <form action="adminAction" method="post">
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">Plant Name</label>
-                            <input type="text" name="name" class="form-control" placeholder="e.g. Red Rose" required>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">Price ($)</label>
-                            <input type="number" step="0.01" name="price" class="form-control" placeholder="0.00" required>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">Category</label>
-                            <select name="category" class="form-select">
-                                <option value="Flowers">Flowers</option>
-                                <option value="Plants">Other Plants</option>
-                            </select>
-                        </div>
-                        <div class="d-grid gap-2 mt-4">
-                            <button type="submit" class="btn btn-success btn-lg">Save to Database</button>
-                            <a href="showFlowers" class="btn btn-outline-secondary">Cancel and Return</a>
-                        </div>
-                    </form>
-                </div>
-            </div>
+                        <form action="manageFlower" method="post">
+                            <input type="hidden" name="action" value="login">
 
-            <div class="text-center mt-4">
-                <p class="text-muted small">Logged in as: Administrator</p>
-                <button class="btn btn-sm btn-link" onclick="location.reload()">Refresh Page</button>
+                            <input type="hidden" name="loginType" value="admin">
+
+                            <div class="mb-3 text-start">
+                                <label class="form-label small">Admin ID</label>
+                                <input type="text" name="username" class="form-control bg-secondary text-white border-0" required>
+                            </div>
+
+                            <div class="mb-4 text-start">
+                                <label class="form-label small">Security Password</label>
+                                <input type="password" name="password" class="form-control bg-secondary text-white border-0" required>
+                            </div>
+
+                            <button type="submit" class="btn btn-warning w-100 fw-bold">VERIFY IDENTITY</button>
+                        </form>
+
+                        <%-- Check if 'status' parameter is 'failed' to display error message --%>
+                        <% if ("failed".equals(request.getParameter("status"))) { %>
+                            <div class="text-danger mt-3 small">
+                                <strong>Error:</strong> Invalid Admin Credentials!
+                            </div>
+                        <% } %>
+
+                        <div class="mt-4">
+                            <a href="index.jsp" class="text-muted small text-decoration-none">Return to Portal</a>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
-</div>
-
-<footer class="text-center py-4 mt-5 text-muted">
-    <p>&copy; 2025 CAT201 Flower Shop Project. Admin System.</p>
-</footer>
-
 </body>
 </html>
