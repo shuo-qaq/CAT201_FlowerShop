@@ -23,7 +23,6 @@
         .search-box:focus { border-color: #198754; box-shadow: none; }
         .cart-count { position: absolute; top: -5px; right: -10px; padding: 2px 6px; border-radius: 50%; font-size: 10px; }
 
-        /* Sidebar Styling */
         #cartSidebar {
             position: fixed; top: 0; right: -400px;
             width: 350px; height: 100%;
@@ -39,7 +38,6 @@
             background: rgba(0,0,0,0.5);
             display: none; z-index: 1999;
         }
-        /* Quantity Buttons Styling */
         .qty-btn { width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; border-radius: 50%; padding: 0; }
     </style>
 </head>
@@ -66,13 +64,13 @@
                             <span class="fw-bold d-block">Product ID: #<%= entry.getKey() %></span>
                         </div>
                         <div class="d-flex align-items-center gap-2">
-                            <a href="cart?action=decrease&id=<%= entry.getKey() %>" class="btn btn-outline-danger qty-btn">
+                            <button onclick="updateQty(<%= entry.getKey() %>, 'decrease', true)" class="btn btn-outline-danger qty-btn border-0">
                                 <i class="fas fa-minus small"></i>
-                            </a>
+                            </button>
                             <span class="fw-bold px-1"><%= entry.getValue() %></span>
-                            <a href="cart?action=add&id=<%= entry.getKey() %>" class="btn btn-outline-success qty-btn">
+                            <button onclick="updateQty(<%= entry.getKey() %>, 'add', true)" class="btn btn-outline-success qty-btn border-0">
                                 <i class="fas fa-plus small"></i>
-                            </a>
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -176,31 +174,54 @@
 </main>
 
 <script>
-    // Keep sidebar open if redirected back from Cart action
+    // Handle Sidebar visibility on page load
     window.onload = function() {
         const urlParams = new URLSearchParams(window.location.search);
-        // If there's an action in URL or session-based need, you could auto-open here
-        // For this version, user manually opens it or it re-renders based on clicks
+        if (urlParams.get('keepOpen') === 'true') {
+            toggleCart();
+            // Remove parameter from URL to prevent reopening on manual refresh
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }
     }
 
     function toggleCart() {
         const sidebar = document.getElementById('cartSidebar');
         const overlay = document.getElementById('cartOverlay');
-        sidebar.classList.toggle('active');
-        overlay.style.display = sidebar.classList.contains('active') ? 'block' : 'none';
+        if (sidebar && overlay) {
+            sidebar.classList.toggle('active');
+            overlay.style.display = sidebar.classList.contains('active') ? 'block' : 'none';
+        }
+    }
+
+    // Unified function to update quantity
+    function updateQty(id, action, keepOpen) {
+        const url = 'cart?action=' + action + '&id=' + id;
+
+        // Use fetch for the background request
+        fetch(url, { method: 'GET' })
+        .then(response => {
+            if (response.ok) {
+                // Determine the next URL
+                let nextUrl = window.location.pathname;
+                if (keepOpen) {
+                    nextUrl += '?keepOpen=true';
+                }
+                // Reload the page to sync all JSP data
+                window.location.href = nextUrl;
+            }
+        })
+        .catch(error => console.error('Error:', error));
     }
 
     function addToCart(id, name) {
         const currentUser = "<%= (session.getAttribute("user") != null) ? session.getAttribute("user") : "" %>";
-
         if (currentUser === "") {
             alert("Authentication Required: Please login to shop.");
             window.location.href = "user_login.jsp";
             return;
         }
-
-        // Navigate to servlet - Referer logic in CartServlet will bring user back
-        window.location.href = 'cart?action=add&id=' + id;
+        // In main list: keepOpen is false
+        updateQty(id, 'add', false);
     }
 
     let currentCat = 'all';

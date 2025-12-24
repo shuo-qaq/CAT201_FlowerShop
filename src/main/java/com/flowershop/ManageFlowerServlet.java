@@ -4,14 +4,16 @@ import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.*;
 import java.io.IOException;
-import java.sql.*;
 
 /**
- * ManageFlowerServlet handles multi-role authentication and administrative
- * flower management (CRUD) operations including detailed descriptions.
+ * ManageFlowerServlet handles authentication (via database) and administrative
+ * flower management (CRUD) operations.
  */
 @WebServlet("/manageFlower")
 public class ManageFlowerServlet extends HttpServlet {
+
+    // Instance of DBUtil to access database logic
+    private DBUtil dbUtil = new DBUtil();
 
     /**
      * Handles GET requests: LOGOUT and DELETE actions.
@@ -21,110 +23,106 @@ public class ManageFlowerServlet extends HttpServlet {
         String action = request.getParameter("action");
         HttpSession session = request.getSession();
 
-        // 1. Process Logout: Clear session and return to shop
+        // 1. Process Logout
         if ("logout".equals(action)) {
             session.invalidate();
             response.sendRedirect("showFlowers");
             return;
         }
 
-        // 2. Admin Role Security Check: Protect administrative operations
+        // 2. Admin Security Check for Delete Action
         String role = (String) session.getAttribute("role");
         if (!"admin".equals(role)) {
             response.sendRedirect("admin_login.jsp");
             return;
         }
 
-        // 3. Process Delete Action
         if ("delete".equals(action)) {
             try {
                 int id = Integer.parseInt(request.getParameter("id"));
+                // You can add a delete method in DBUtil or use direct SQL
                 executeSql("DELETE FROM flowers WHERE id = ?", id);
             } catch (NumberFormatException e) {
                 e.printStackTrace();
             }
         }
-
         response.sendRedirect("showFlowers?target=management");
     }
 
     /**
-     * Handles POST requests: LOGIN (Admin/User), ADD, and UPDATE actions.
+     * Handles POST requests: LOGIN and REGISTER actions.
      */
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         request.setCharacterEncoding("UTF-8");
         String action = request.getParameter("action");
+
+        // 1. Process Login
+        if ("login".equals(action)) {
+            handleLogin(request, response);
+        }
+        // 2. Process Registration
+        else if ("register".equals(action)) {
+            handleRegister(request, response);
+        }
+        // 3. Process Flower Management (Only for logged-in admins)
+        else {
+            HttpSession session = request.getSession();
+            String role = (String) session.getAttribute("role");
+            if ("admin".equals(role)) {
+                processFlowerManagement(request, action);
+                response.sendRedirect("showFlowers?target=management");
+            } else {
+                response.sendRedirect("admin_login.jsp");
+            }
+        }
+    }
+
+    /**
+     * Authenticates users against the database.
+     * Replaces the previous "any credentials" logic.
+     */
+    private void handleLogin(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        String user = request.getParameter("username");
+        String pass = request.getParameter("password");
         HttpSession session = request.getSession();
 
-        // 1. Authentication Logic: Supports both Customer and Admin
-        if ("login".equals(action)) {
-            String userParam = request.getParameter("username");
-            String passParam = request.getParameter("password");
-            String loginType = request.getParameter("loginType"); // "admin" or "customer"
+        // Database-driven validation
+        if (dbUtil.validateUser(user, pass)) {
+            String role = dbUtil.getUserRole(user);
+            session.setAttribute("user", user);
+            session.setAttribute("role", role);
 
-            if ("admin".equals(loginType)) {
-                // ADMIN LOGIN: Verified against database 'users' table
-                handleAdminLogin(userParam, passParam, session, response);
+            // Redirect based on role
+            if ("admin".equals(role)) {
+                response.sendRedirect("showFlowers?target=management");
             } else {
-                // CUSTOMER LOGIN: Bypass database check as requested
-                handleCustomerLogin(userParam, passParam, session, response);
+                response.sendRedirect("showFlowers");
             }
-            return;
+        } else {
+            // Redirect back with error message if authentication fails
+            response.sendRedirect("user_login.jsp?error=invalid");
         }
-
-        // 2. Security Barrier: Ensure only admins can modify flower data
-        String role = (String) session.getAttribute("role");
-        if (!"admin".equals(role)) {
-            response.sendRedirect("admin_login.jsp");
-            return;
-        }
-
-        // 3. Process Flower Management (Add/Update)
-        processFlowerManagement(request, action);
-
-        response.sendRedirect("showFlowers?target=management");
     }
 
     /**
-     * Private helper to handle Admin database authentication.
+     * Handles new user account creation.
      */
-    private void handleAdminLogin(String user, String pass, HttpSession session, HttpServletResponse response) throws IOException {
-        try (Connection conn = DBUtil.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(
-                     "SELECT role FROM users WHERE username = ? AND password = ? AND role = 'admin'")) {
+    private void handleRegister(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        String user = request.getParameter("username");
+        String pass = request.getParameter("password");
 
-            pstmt.setString(1, user);
-            pstmt.setString(2, pass);
-
-            try (ResultSet rs = pstmt.executeQuery()) {
-                if (rs.next()) {
-                    session.setAttribute("user", user);
-                    session.setAttribute("role", "admin");
-                    response.sendRedirect("showFlowers?target=management");
-                } else {
-                    response.sendRedirect("admin_login.jsp?status=failed");
-                }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-            response.sendRedirect("admin_login.jsp?status=error");
+        if (dbUtil.registerUser(user, pass)) {
+            // Success: Proceed to login page
+            response.sendRedirect("user_login.jsp?status=registered");
+        } else {
+            // Failure: User might already exist
+            response.sendRedirect("register.jsp?error=exists");
         }
     }
 
     /**
-     * Private helper to handle Customer login.
-     * Modified to allow any credentials to succeed.
-     */
-    private void handleCustomerLogin(String user, String pass, HttpSession session, HttpServletResponse response) throws IOException {
-        // Database check removed to allow instant login success
-        session.setAttribute("user", user);
-        session.setAttribute("role", "customer");
-        response.sendRedirect("showFlowers");
-    }
-
-    /**
-     * Private helper to handle Add or Update SQL, including 'description'.
+     * Helper to handle Add or Update flower data.
      */
     private void processFlowerManagement(HttpServletRequest request, String action) {
         String name = request.getParameter("name");
@@ -155,11 +153,11 @@ public class ManageFlowerServlet extends HttpServlet {
     }
 
     /**
-     * Utility method to execute SQL updates securely using DBUtil.
+     * Utility method to execute SQL updates using DBUtil connection.
      */
     private void executeSql(String sql, Object... params) {
-        try (Connection conn = DBUtil.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+        try (java.sql.Connection conn = DBUtil.getConnection();
+             java.sql.PreparedStatement pstmt = conn.prepareStatement(sql)) {
             for (int i = 0; i < params.length; i++) {
                 pstmt.setObject(i + 1, params[i]);
             }
