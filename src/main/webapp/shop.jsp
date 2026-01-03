@@ -52,13 +52,13 @@
             <button onclick="toggleCart()" class="btn-close"></button>
         </div>
 
-        <div id="sidebarContent" class="flex-grow-1 overflow-auto">
+        <div id="sidebarContent" class="flex-grow-1 overflow-auto text-dark">
             <%
                 Map<Integer, Integer> cart = (Map<Integer, Integer>) session.getAttribute("cart");
                 if (cart != null && !cart.isEmpty()) {
                     for (Map.Entry<Integer, Integer> entry : cart.entrySet()) {
             %>
-                <div class="card mb-3 border-0 shadow-sm p-3 text-dark">
+                <div class="card mb-3 border-0 shadow-sm p-3">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
                             <span class="fw-bold d-block">Product ID: #<%= entry.getKey() %></span>
@@ -92,7 +92,7 @@
                 </a>
             <% } %>
             <a href="cart.jsp" class="btn btn-success w-100 fw-bold py-2 shadow-sm">CHECKOUT NOW</a>
-            <button onclick="toggleCart()" class="btn btn-outline-secondary w-100 btn-sm mt-2">CONTINUE SHOPPING</button>
+            <button onclick="toggleCart()" class="btn btn-outline-secondary w-100 btn-sm mt-2 text-uppercase">Continue Shopping</button>
         </div>
     </div>
 </div>
@@ -134,8 +134,8 @@
 
 <main class="container my-5">
     <div class="row mb-5 g-3 align-items-center">
-        <div class="col-lg-4"><h2 class="fw-bold m-0">Our Collection</h2></div>
-        <div class="col-lg-4">
+        <div class="col-lg-4 text-dark"><h2 class="fw-bold m-0">Our Collection</h2></div>
+        <div class="col-lg-4 text-dark">
             <input type="text" id="searchInput" class="form-control search-box" placeholder="Search products..." onkeyup="filterItems()">
         </div>
         <div class="col-lg-4 text-lg-end">
@@ -163,8 +163,8 @@
                         <h6 class="fw-bold text-uppercase"><%= f.getName() %></h6>
                         <p class="text-success fw-bold mb-3">$<%= String.format("%.2f", f.getPrice()) %></p>
                         <a href="productDetails?id=<%= f.getId() %>" class="btn btn-success btn-sm w-100 fw-bold mb-2">DETAILS</a>
-                        <button onclick="addToCart(<%= f.getId() %>, '<%= f.getName() %>')" class="btn btn-outline-dark btn-sm w-100 fw-bold">
-                            ADD TO CART
+                        <button onclick="addToCart(<%= f.getId() %>, '<%= f.getName() %>')" class="btn btn-outline-dark btn-sm w-100 fw-bold text-uppercase">
+                            Add to Cart
                         </button>
                     </div>
                 </div>
@@ -174,12 +174,19 @@
 </main>
 
 <script>
-    // Handle Sidebar visibility on page load
+    // Logic to run when the page has finished loading
     window.onload = function() {
+        // --- Restore Scroll Position ---
+        const savedScrollPos = localStorage.getItem('shopScrollPos');
+        if (savedScrollPos) {
+            window.scrollTo(0, parseInt(savedScrollPos));
+            localStorage.removeItem('shopScrollPos'); // Clear after use
+        }
+
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.get('keepOpen') === 'true') {
             toggleCart();
-            // Remove parameter from URL to prevent reopening on manual refresh
+            // Clean up the URL
             window.history.replaceState({}, document.title, window.location.pathname);
         }
     }
@@ -193,24 +200,25 @@
         }
     }
 
-    // Unified function to update quantity
+    // Main function to update cart quantities
     function updateQty(id, action, keepOpen) {
+        // --- Save Current Scroll Position ---
+        localStorage.setItem('shopScrollPos', window.scrollY);
+
         const url = 'cart?action=' + action + '&id=' + id;
 
-        // Use fetch for the background request
         fetch(url, { method: 'GET' })
         .then(response => {
             if (response.ok) {
-                // Determine the next URL
                 let nextUrl = window.location.pathname;
                 if (keepOpen) {
                     nextUrl += '?keepOpen=true';
                 }
-                // Reload the page to sync all JSP data
+                // Reload to refresh JSP session data
                 window.location.href = nextUrl;
             }
         })
-        .catch(error => console.error('Error:', error));
+        .catch(error => console.error('Request Error:', error));
     }
 
     function addToCart(id, name) {
@@ -220,7 +228,7 @@
             window.location.href = "user_login.jsp";
             return;
         }
-        // In main list: keepOpen is false
+        // Add item and keep current page view
         updateQty(id, 'add', false);
     }
 
