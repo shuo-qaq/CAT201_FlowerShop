@@ -1,0 +1,16 @@
+0:0:0:0:0:0:0:1 - - [25/Dec/2025:00:24:08 +0800] "GET /showFlowers HTTP/1.1" 200 17660 http-bio-8082-exec-8 33
+0:0:0:0:0:0:0:1 - - [25/Dec/2025:00:24:09 +0800] "GET /user_login.jsp HTTP/1.1" 200 2527 http-bio-8082-exec-8 3
+0:0:0:0:0:0:0:1 - - [25/Dec/2025:00:24:14 +0800] "POST /manageFlower HTTP/1.1" 302 - http-bio-8082-exec-8 16
+0:0:0:0:0:0:0:1 - - [25/Dec/2025:00:24:14 +0800] "GET /showFlowers HTTP/1.1" 200 17820 http-bio-8082-exec-8 7
+0:0:0:0:0:0:0:1 - - [25/Dec/2025:00:24:17 +0800] "GET /cart?action=add&id=4 HTTP/1.1" 302 - http-bio-8082-exec-8 1
+0:0:0:0:0:0:0:1 - - [25/Dec/2025:00:24:17 +0800] "GET /showFlowers HTTP/1.1" 200 18827 http-bio-8082-exec-8 10
+0:0:0:0:0:0:0:1 - - [25/Dec/2025:00:24:17 +0800] "GET /showFlowers HTTP/1.1" 200 18827 http-bio-8082-exec-8 16
+0:0:0:0:0:0:0:1 - - [25/Dec/2025:00:24:19 +0800] "GET /cart.jsp HTTP/1.1" 200 6815 http-bio-8082-exec-8 8
+0:0:0:0:0:0:0:1 - - [25/Dec/2025:00:24:23 +0800] "GET /cart?action=clear HTTP/1.1" 302 - http-bio-8082-exec-8 1
+0:0:0:0:0:0:0:1 - - [25/Dec/2025:00:24:23 +0800] "GET /cart.jsp HTTP/1.1" 200 5813 http-bio-8082-exec-8 2
+0:0:0:0:0:0:0:1 - - [25/Dec/2025:00:31:45 +0800] "GET /showFlowers HTTP/1.1" 200 37617 http-bio-8082-exec-2 40
+0:0:0:0:0:0:0:1 - - [25/Dec/2025:00:32:10 +0800] "GET /manageFlower?action=logout HTTP/1.1" 302 - http-bio-8082-exec-2 5
+0:0:0:0:0:0:0:1 - - [25/Dec/2025:00:32:10 +0800] "GET /index.jsp HTTP/1.1" 200 3424 http-bio-8082-exec-2 5
+0:0:0:0:0:0:0:1 - - [25/Dec/2025:00:32:11 +0800] "GET /admin_login.jsp HTTP/1.1" 200 1781 http-bio-8082-exec-2 5
+0:0:0:0:0:0:0:1 - - [25/Dec/2025:00:32:17 +0800] "POST /manageFlower HTTP/1.1" 302 - http-bio-8082-exec-2 18
+0:0:0:0:0:0:0:1 - - [25/Dec/2025:00:32:17 +0800] "GET /showFlowers?target=management HTTP/1.1" 200 50577 http-bio-8082-exec-2 19
