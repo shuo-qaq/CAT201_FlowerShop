@@ -122,7 +122,7 @@ public class CartServlet extends HttpServlet {
                 }
 
             } catch (Exception e) {
-                e.printStackTrace();
+                e.printStackTrace();//test
                 response.sendRedirect("cart.jsp?error=server_error");
             }
         }
