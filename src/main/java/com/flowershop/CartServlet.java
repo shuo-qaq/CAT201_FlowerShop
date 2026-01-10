@@ -166,7 +166,7 @@ public class CartServlet extends HttpServlet {
                 }
 
             } catch (Exception e) {
-                // If any server/database error occurs
+
                 e.printStackTrace();
                 response.sendRedirect("cart.jsp?error=server_error");
             }
