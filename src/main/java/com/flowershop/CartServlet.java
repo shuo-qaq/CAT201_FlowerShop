@@ -161,7 +161,7 @@ public class CartServlet extends HttpServlet {
                     response.sendRedirect("payment_success.jsp");
 
                 } else {
-                    // Database insert failed
+
                     response.sendRedirect("cart.jsp?error=db_fail");
                 }
 
