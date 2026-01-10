@@ -70,7 +70,7 @@ public class DBUtil {
             e.printStackTrace();
         }
 
-        // Default role if user not found or query failed
+        // Default role if user nott found or query failed
         return "customer";
     }
 
