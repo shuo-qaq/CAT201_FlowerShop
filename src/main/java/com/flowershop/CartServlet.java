@@ -16,59 +16,60 @@ import java.util.Map;
 public class CartServlet extends HttpServlet {
 
     /**
-     * Handles cart updates: add, decrease, and clear items.
+     * Handles cart actions such as add, decrease, and clear.
      */
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
-        // Get action parameter (add / decrease / clear)
+        // Get the action type from URL (add / decrease / clear)
         String action = request.getParameter("action");
 
-        // Get current session
+        // Get current user session
         HttpSession session = request.getSession();
 
-        // Get cart from session, cart stores (productId -> quantity)
+        // Get cart data from session (productId -> quantity)
         Map<Integer, Integer> cart = (Map<Integer, Integer>) session.getAttribute("cart");
 
-        // If cart does not exist, create a new one
+        // Create a new cart if it does not exist
         if (cart == null) {
             cart = new HashMap<>();
         }
 
-        // If action is provided, perform cart operation
+        // Perform cart action if action exists
         if (action != null) {
             try {
                 // Get product id from request
                 String idParam = request.getParameter("id");
                 Integer id = (idParam != null) ? Integer.parseInt(idParam) : null;
 
-                // Handle different cart actions
+                // Process different actions
                 switch (action) {
                     case "add":
-                        // Increase quantity by 1
+                        // Add 1 item into the cart
                         if (id != null) cart.put(id, cart.getOrDefault(id, 0) + 1);
                         break;
 
                     case "decrease":
-                        // Decrease quantity by 1, remove item if quantity becomes 0
+                        // Reduce item quantity by 1
                         if (id != null && cart.containsKey(id)) {
                             int currentQty = cart.get(id);
                             if (currentQty > 1) {
                                 cart.put(id, currentQty - 1);
                             } else {
+                                // Remove item if quantity becomes 0
                                 cart.remove(id);
                             }
                         }
                         break;
 
                     case "clear":
-                        // Clear all items in cart
+                        // Remove all items from the cart
                         cart.clear();
                         break;
                 }
             } catch (NumberFormatException e) {
-                // If id is not a valid number
+                // Handle invalid product id format
                 e.printStackTrace();
             }
         }
@@ -76,97 +77,97 @@ public class CartServlet extends HttpServlet {
         // Save updated cart back to session
         session.setAttribute("cart", cart);
 
-        // Check if request is from AJAX
+        // Check if request comes from AJAX
         String ajax = request.getHeader("X-Requested-With");
 
-        // Get previous page URL
+        // Get the previous page link
         String referer = request.getHeader("Referer");
 
-        // If AJAX request, just return OK status
+        // If AJAX request, return success status only
         if ("XMLHttpRequest".equals(ajax)) {
             response.setStatus(HttpServletResponse.SC_OK);
 
-            // If not from cart.jsp, redirect back to previous page
+            // If not from cart.jsp, go back to the previous page
         } else if (referer != null && !referer.contains("cart.jsp")) {
             response.sendRedirect(referer);
 
-            // Otherwise redirect to cart page
+            // Otherwise, go to cart page
         } else {
             response.sendRedirect("cart.jsp");
         }
     }
 
     /**
-     * Handles the Checkout process and saves order to the database.
+     * Handles checkout and saves the order into database.
      */
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
-        // Get action parameter (e.g. checkout)
+        // Get request action (checkout)
         String action = request.getParameter("action");
 
-        // Get current session
+        // Get current user session
         HttpSession session = request.getSession();
 
-        // 1. Check if the user is logged in
+        // Check login status by session username
         String username = (String) session.getAttribute("user");
 
-        // If user is not logged in, redirect to login page
+        // Redirect to login page if not logged in
         if (username == null) {
             response.sendRedirect("user_login.jsp");
             return;
         }
 
-        // Only handle checkout action
+        // Process checkout request only
         if ("checkout".equals(action)) {
 
-            // 2. Get shipping details and total price from request
+            // Get shipping information and total price
             String address = request.getParameter("address");
             String phone = request.getParameter("phone");
             String totalStr = request.getParameter("grandTotal");
 
-            // Parse total price, default is 0.0 if missing
+            // Convert total price string to number
             double totalPrice = (totalStr != null) ? Double.parseDouble(totalStr) : 0.0;
 
-            // 3. SQL to insert order into orders table
+            // SQL statement for inserting new order
             String sql = "INSERT INTO orders (username, total_price, shipping_address, phone_number, order_status) " +
                     "VALUES (?, ?, ?, ?, 'Pending')";
 
-            // 4. Insert order into database
+            // Insert the order into database
             try (Connection conn = DBUtil.getConnection();
                  PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
-                // Set parameters for SQL statement
+                // Set SQL parameters
                 pstmt.setString(1, username);
                 pstmt.setDouble(2, totalPrice);
                 pstmt.setString(3, address);
                 pstmt.setString(4, phone);
 
-                // Execute insert
+                // Execute database insert
                 int rows = pstmt.executeUpdate();
 
-                // If insert successful
+                // If insert success
                 if (rows > 0) {
 
-                    // Clear cart after checkout
+                    // Clear cart after successful checkout
                     session.removeAttribute("cart");
 
-                    // Save last order info for receipt page
+                    // Store order info for success page display
                     session.setAttribute("lastOrderAddress", address);
                     session.setAttribute("lastOrderPhone", phone);
                     session.setAttribute("lastOrderTotal", totalPrice);
 
-                    // Redirect to success page
+                    // Go to success page
                     response.sendRedirect("payment_success.jsp");
 
                 } else {
-
+                    // Insert failed
                     response.sendRedirect("cart.jsp?error=db_fail");
                 }
 
             } catch (Exception e) {
-
+                // Handle server/database errors
                 e.printStackTrace();
                 response.sendRedirect("cart.jsp?error=server_error");
             }
